@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import API_URL from '../config'; // Import the API_URL from the config
+
 
 const BookingForm = ({ route }) => {
   const [name, setName] = useState('');
@@ -12,7 +14,7 @@ const BookingForm = ({ route }) => {
 
     try {
       // Send POST request to backend API to save booking
-      const response = await axios.post('http://localhost:5000/api/bookings', {
+      const response = await axios.post(`${API_URL}/bookings`, {
         name,
         email,
         route,

@@ -2,17 +2,30 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const path = require('path'); // For handling static files in production
 const Booking = require('./Models/Booking'); // Import the Booking model
 
+const debug = require('debug')('app:startup');
+debug("Starting application...");
+debug("Connecting to database...");
+
+require('dotenv').config();  // Load environment variables from .env file
+
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000; // Default to 5000, or use PORT from environment
 
 // Middlewares
 app.use(cors());
 app.use(bodyParser.json());
 
-// Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/shuttle-service', {
+// Connect to MongoDB using environment-based URI
+const mongoURI = process.env.NODE_ENV === 'production'
+  ? process.env.MONGO_URI // Use production MongoDB URI from environment variable
+  : 'mongodb://localhost:27017/shuttle-service'; // Use local MongoDB URI for development
+
+console.log("MONGO_URL:", process.env.MONGO_URI); // Check if environment variable is loaded correctly
+
+mongoose.connect(mongoURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
@@ -48,15 +61,7 @@ app.post('/api/bookings', async (req, res) => {
   }
 });
 
-
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
-
-
 // GET route to retrieve all the bookings saved in mongoDB
-app.use(express.json());
 app.get('/api/bookings', async (req, res) => {
   try {
     const bookings = await Booking.find(); // Retrieve all bookings
@@ -64,4 +69,28 @@ app.get('/api/bookings', async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving bookings', error });
   }
+});
+
+// Serve static files (production only)
+if (process.env.NODE_ENV === 'production') {
+  // Set the build folder from React as static assets
+  app.use(express.static(path.join(__dirname, 'build')));
+
+  // Serve the React app's index.html for all routes, to handle client-side routing
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+  });
+}
+else {
+    // Development environment setup
+    console.log("Running in development mode");
+    // Example: API endpoint response for root
+    app.get('/', (req, res) => {
+      res.send("API is running in development mode.");
+    });
+}
+
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
