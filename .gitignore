@@ -1,0 +1,9 @@
+backend/node_modules/
+frontend/node_modules/
+shuttle-service-backend/node_modules/
+frontend/build/
+backend/.env
+frontend/.env
+shuttle-service-backend/.env
+*.log
+
